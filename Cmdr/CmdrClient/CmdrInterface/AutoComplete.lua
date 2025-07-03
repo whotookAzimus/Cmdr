@@ -1,3 +1,4 @@
+-- luacheck: ignore 212
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 
@@ -10,11 +11,14 @@ return function(Cmdr)
 
 	local Util = Cmdr.Util
 
-	local Gui = Player:WaitForChild("PlayerGui"):WaitForChild("Cmdr"):WaitForChild("Autocomplete")
+	local Gui = Player
+		:WaitForChild("PlayerGui")
+		:WaitForChild("Cmdr")--[[:WaitForChild("Main")]]
+		:WaitForChild("Autocomplete")
 	local AutoItem = Gui:WaitForChild("TextButton")
 	local Title = Gui:WaitForChild("Title")
 	local Description = Gui:WaitForChild("Description")
-	local Entry = Gui.Parent:WaitForChild("Frame"):WaitForChild("Entry")
+	local Entry = Gui.Parent:WaitForChild("Main"):WaitForChild("Frame"):WaitForChild("Entry")
 	AutoItem.Parent = nil
 
 	local defaultBarThickness = Gui.ScrollBarThickness
@@ -73,7 +77,7 @@ return function(Cmdr)
 		Gui.ScrollBarThickness = defaultBarThickness
 	end
 
-	-- Shows the auto complete menu with the given list and possible options
+	--- Shows the auto complete menu with the given list and possible options
 	-- item = {typedText, suggestedText, options?=options}
 	-- The options table is optional. `at` should only be passed into AutoComplete::Show
 	-- name, type, and description may be passed in an options dictionary inside the items as well
@@ -118,11 +122,6 @@ return function(Cmdr)
 			btn.BackgroundTransparency = i == self.SelectedItem and 0.5 or 1
 
 			local start, stop = string.find(rightText:lower(), leftText:lower(), 1, true)
-			if start == nil and stop == nil then
-				--start and stop are nil when the type returns an autocomplete result that is completely different (such as a custom alias hanlded within the type).
-				--One should never be nil without the other.
-				start, stop = 1, string.len(rightText)
-			end
 			btn.Typed.Text = string.rep(" ", start - 1) .. leftText
 			btn.Suggest.Text = string.sub(rightText, 0, start - 1)
 				.. string.rep(" ", #leftText)
@@ -141,7 +140,7 @@ return function(Cmdr)
 
 		Gui.UIListLayout:ApplyLayout()
 
-		-- Todo: Use TextService to find accurate position for auto complete box
+		--TODO: Use TextService to find accurate position for auto complete box
 		local text = Entry.TextBox.Text
 		local words = Util.SplitString(text)
 		if text:sub(#text, #text) == " " and not options.at then
@@ -151,8 +150,7 @@ return function(Cmdr)
 		local extra = (options.at and options.at or (#table.concat(words, " ") + 1)) * 7
 
 		-- Update the auto complete container
-		Gui.Position =
-			UDim2.new(0, Entry.TextBox.AbsolutePosition.X - 10 + extra, 0, Entry.TextBox.AbsolutePosition.Y + 30)
+		Gui.Position = UDim2.new(0, Entry.TextBox.AbsolutePosition.X - 10 + extra, 0, Entry.TextBox.AbsolutePosition.Y + 30)
 		Gui.Size = UDim2.new(0, autocompleteWidth, 0, Gui.UIListLayout.AbsoluteContentSize.Y)
 		Gui.Visible = true
 
@@ -160,7 +158,7 @@ return function(Cmdr)
 		UpdateInfoDisplay(self.Items[1] and self.Items[1].options or options)
 	end
 
-	-- Returns the selected item in the auto complete
+	--- Returns the selected item in the auto complete
 	function AutoComplete:GetSelectedItem()
 		if Gui.Visible == false then
 			return nil
@@ -169,17 +167,17 @@ return function(Cmdr)
 		return AutoComplete.Items[AutoComplete.SelectedItem]
 	end
 
-	-- Hides the auto complete
+	--- Hides the auto complete
 	function AutoComplete:Hide()
 		Gui.Visible = false
 	end
 
-	-- Returns if the menu is visible
+	--- Returns if the menu is visible
 	function AutoComplete:IsVisible()
 		return Gui.Visible
 	end
 
-	-- Changes the user's item selection by the given delta
+	--- Changes the user's item selection by the given delta
 	function AutoComplete:Select(delta)
 		if not Gui.Visible then
 			return

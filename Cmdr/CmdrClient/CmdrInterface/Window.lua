@@ -1,4 +1,6 @@
+--!nocheck
 -- Here be dragons
+-- luacheck: ignore 212
 local GuiService = game:GetService("GuiService")
 local UserInputService = game:GetService("UserInputService")
 local TextChatService = game:GetService("TextChatService")
@@ -8,7 +10,7 @@ local Player = Players.LocalPlayer
 local WINDOW_MAX_HEIGHT = 300
 local MOUSE_TOUCH_ENUM = { Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2, Enum.UserInputType.Touch }
 
--- Window handles the command bar GUI
+--- Window handles the command bar GUI
 local Window = {
 	Valid = true,
 	AutoComplete = nil,
@@ -18,24 +20,24 @@ local Window = {
 	HistoryState = nil,
 }
 
-local Gui = Player:WaitForChild("PlayerGui"):WaitForChild("Cmdr"):WaitForChild("Frame")
+local container = Player:WaitForChild("PlayerGui"):WaitForChild("Cmdr"):WaitForChild("Main")
+local Gui = container:WaitForChild("Frame")
 local Line = Gui:WaitForChild("Line")
 local Entry = Gui:WaitForChild("Entry")
 
 Line.Parent = nil
 
--- Update the text entry label
+--- Update the text entry label
 function Window:UpdateLabel()
-	Entry.TextLabel.Text =
-		`{Player.Name}{if self.Cmdr.PlaceName and self.Cmdr.PlaceName ~= "" then `@{self.Cmdr.PlaceName}` else ""}$`
+	Entry.TextLabel.Text = Player.Name .. "@" .. self.Cmdr.PlaceName .. "$:"
 end
 
--- Get the text entry label
+--- Get the text entry label
 function Window:GetLabel()
 	return Entry.TextLabel.Text
 end
 
--- Recalculate the window height
+--- Recalculate the window height
 function Window:UpdateWindowHeight()
 	local windowHeight = Gui.UIListLayout.AbsoluteContentSize.Y
 		+ Gui.UIPadding.PaddingTop.Offset
@@ -44,7 +46,7 @@ function Window:UpdateWindowHeight()
 	Gui.CanvasPosition = Vector2.new(0, windowHeight)
 end
 
--- Add a line to the command bar
+--- Add a line to the command bar
 function Window:AddLine(text, options)
 	options = options or {}
 	text = tostring(text)
@@ -67,22 +69,20 @@ function Window:AddLine(text, options)
 	line.Parent = Gui
 end
 
--- Returns if the command bar is visible
+--- Returns if the command bar is visible
 function Window:IsVisible()
 	return Gui.Visible
 end
 
--- Sets the command bar visible or not
+--- Sets the command bar visible or not
 function Window:SetVisible(visible)
 	Gui.Visible = visible
 
 	if visible then
 		self.PreviousChatWindowConfigurationEnabled = TextChatService.ChatWindowConfiguration.Enabled
 		self.PreviousChatInputBarConfigurationEnabled = TextChatService.ChatInputBarConfiguration.Enabled
-		self.PreviousChannelTabsConfigurationEnabled = TextChatService.ChannelTabsConfiguration.Enabled
 		TextChatService.ChatWindowConfiguration.Enabled = false
 		TextChatService.ChatInputBarConfiguration.Enabled = false
-		TextChatService.ChannelTabsConfiguration.Enabled = false
 
 		Entry.TextBox:CaptureFocus()
 		self:SetEntryText("")
@@ -92,16 +92,10 @@ function Window:SetVisible(visible)
 			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		end
 	else
-		TextChatService.ChatWindowConfiguration.Enabled = if self.PreviousChatWindowConfigurationEnabled ~= nil
-			then self.PreviousChatWindowConfigurationEnabled
-			else true
-		TextChatService.ChatInputBarConfiguration.Enabled = if self.PreviousChatInputBarConfigurationEnabled
-				~= nil
-			then self.PreviousChatInputBarConfigurationEnabled
-			else true
-		TextChatService.ChannelTabsConfiguration.Enabled = if self.PreviousChannelTabsConfigurationEnabled ~= nil
-			then self.PreviousChannelTabsConfigurationEnabled
-			else true
+		TextChatService.ChatWindowConfiguration.Enabled = if self.PreviousChatWindowConfigurationEnabled ~= nil then 
+			self.PreviousChatWindowConfigurationEnabled else true
+		TextChatService.ChatInputBarConfiguration.Enabled = if self.PreviousChatInputBarConfigurationEnabled ~= nil then 
+			self.PreviousChatInputBarConfigurationEnabled else true
 
 		Entry.TextBox:ReleaseFocus()
 		self.AutoComplete:Hide()
@@ -113,17 +107,17 @@ function Window:SetVisible(visible)
 	end
 end
 
--- Hides the command bar
+--- Hides the command bar
 function Window:Hide()
 	return self:SetVisible(false)
 end
 
--- Shows the command bar
+--- Shows the command bar
 function Window:Show()
 	return self:SetVisible(true)
 end
 
--- Sets the text in the command bar text box, and captures focus
+--- Sets the text in the command bar text box, and captures focus
 function Window:SetEntryText(text)
 	Entry.TextBox.Text = text
 
@@ -134,12 +128,12 @@ function Window:SetEntryText(text)
 	end
 end
 
--- Gets the text in the command bar text box
+--- Gets the text in the command bar text box
 function Window:GetEntryText()
 	return Entry.TextBox.Text:gsub("\t", "")
 end
 
--- Sets whether the command is in a valid state or not.
+--- Sets whether the command is in a valid state or not.
 -- Cannot submit if in invalid state.
 function Window:SetIsValidInput(isValid, errorText)
 	Entry.TextBox.TextColor3 = isValid and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 73, 73)
@@ -151,13 +145,13 @@ function Window:HideInvalidState()
 	Entry.TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
--- Event handler for text box focus lost
+--- Event handler for text box focus lost
 function Window:LoseFocus(submit)
 	local text = Entry.TextBox.Text
 
 	self:ClearHistoryState()
 
-	if Gui.Visible and not GuiService.MenuIsOpen and not UserInputService.TouchEnabled then
+	if Gui.Visible and not GuiService.MenuIsOpen then
 		-- self:SetEntryText("")
 		Entry.TextBox:CaptureFocus()
 	elseif GuiService.MenuIsOpen and Gui.Visible then
@@ -205,7 +199,7 @@ end
 
 local lastPressTime = 0
 local pressCount = 0
--- Handles user input when the box is focused
+--- Handles user input when the box is focused
 function Window:BeginInput(input, gameProcessed)
 	if GuiService.MenuIsOpen then
 		self:Hide()

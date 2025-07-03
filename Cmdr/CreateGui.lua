@@ -129,7 +129,7 @@ return function()
 	TextLabel.Size = UDim2.new(0, 0, 0, 20)
 	TextLabel.AutomaticSize = Enum.AutomaticSize.X
 	TextLabel.Text = ""
-	TextLabel.TextColor3 = Color3.fromRGB(255, 223, 93)
+	TextLabel.TextColor3 = Color3.fromRGB(81, 162, 255)
 	TextLabel.TextSize = 14
 	TextLabel.TextXAlignment = Enum.TextXAlignment.Left
 	TextLabel.Parent = Entry

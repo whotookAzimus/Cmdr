@@ -7,57 +7,9 @@ local Util = require(Shared:WaitForChild("Util"))
 
 if RunService:IsClient() == false then
 	error(
-		"[Cmdr] Server scripts cannot require the client library. Please require the server library from the server to use Cmdr in your own code."
+		"Server scripts cannot require the client library. Please require the server library to use Cmdr in your own code."
 	)
 end
-
---[=[
-	@class CmdrClient
-	@client
-	The Cmdr client singleton and entry point.
-]=]
-
---[=[
-	@within CmdrClient
-	@prop Registry Registry
-	@readonly
-	Refers to the current command Registry.
-]=]
-
---[=[
-	@within CmdrClient
-	@prop Dispatcher Dispatcher
-	@readonly
-	Refers to the current command Dispatcher.
-]=]
-
---[=[
-	@within CmdrClient
-	@prop Util Util
-	@readonly
-	Refers to a table containing many useful utility functions.
-]=]
-
---[=[
-	@within CmdrClient
-	@prop Enabled boolean
-	@readonly
-	Whether or not Cmdr is enabled (will show via the defined activation keys). Use [`CmdrClient:SetEnabled`](#SetEnabled) to change.
-]=]
-
---[=[
-	@within CmdrClient
-	@prop PlaceName string
-	@readonly
-	The current place name, displayed on the interface. Use [`CmdrClient:SetPlaceName`](#SetPlaceName) to change.
-]=]
-
---[=[
-	@within CmdrClient
-	@prop ActivationKeys { [Enum.KeyCode] = true }
-	@readonly
-	The list of key codes that will show or hide Cmdr. Use [`CmdrClient:SetActivationKeys`](#SetActivationKeys) to change.
-]=]
 
 local Cmdr
 do
@@ -70,7 +22,7 @@ do
 		MashToEnable = false,
 		ActivationUnlocksMouse = false,
 		HideOnLostFocus = true,
-		PlaceName = "Cmdr",
+		PlaceName = "oobg",
 		Util = Util,
 		Events = {},
 	}, {
@@ -96,48 +48,28 @@ end
 
 local Interface = require(script.CmdrInterface)(Cmdr)
 
---[=[
-	Sets the key codes that will used to show or hide Cmdr.
-
-	@within CmdrClient
-]=]
-function Cmdr:SetActivationKeys(keys: { Enum.KeyCode })
-	self.ActivationKeys = Util.MakeDictionary(keys)
+--- Sets a list of keyboard keys (Enum.KeyCode) that can be used to open the commands menu
+function Cmdr:SetActivationKeys(keysArray)
+	self.ActivationKeys = Util.MakeDictionary(keysArray)
 end
 
---[=[
-	Sets the place name label on the interface. This is useful for a quick way to tell what game you're playing in a universe game.
-
-	@within CmdrClient
-]=]
-function Cmdr:SetPlaceName(name: string)
+--- Sets the place name label on the interface
+function Cmdr:SetPlaceName(name)
 	self.PlaceName = name
 	Interface.Window:UpdateLabel()
 end
 
---[=[
-	Sets whether or not Cmdr can be shown via the defined activation keys. Useful for when you want users to opt-in to show the console, for instance in a settings menu.
-
-	@within CmdrClient
-]=]
-function Cmdr:SetEnabled(enabled: boolean)
+--- Sets whether or not the console is enabled
+function Cmdr:SetEnabled(enabled)
 	self.Enabled = enabled
 end
 
---[=[
-	Sets if activation will free the mouse.
-
-	@within CmdrClient
-]=]
-function Cmdr:SetActivationUnlocksMouse(enabled: boolean)
+--- Sets if activation will free the mouse.
+function Cmdr:SetActivationUnlocksMouse(enabled)
 	self.ActivationUnlocksMouse = enabled
 end
 
---[=[
-	Shows the Cmdr window. Does nothing if Cmdr isn't enabled.
-
-	@within CmdrClient
-]=]
+--- Shows Cmdr window
 function Cmdr:Show()
 	if not self.Enabled then
 		return
@@ -146,65 +78,40 @@ function Cmdr:Show()
 	Interface.Window:Show()
 end
 
---[=[
-	Hides the Cmdr window.
-
-	@within CmdrClient
-]=]
+--- Hides Cmdr window
 function Cmdr:Hide()
 	Interface.Window:Hide()
 end
 
---[=[
-	Toggles the Cmdr window. Does nothing if Cmdr isn't enabled.
-
-	@within CmdrClient
-]=]
+--- Toggles Cmdr window
 function Cmdr:Toggle()
 	if not self.Enabled then
-		self:Hide()
-		return
+		return self:Hide()
 	end
 
 	Interface.Window:SetVisible(not Interface.Window:IsVisible())
 end
 
---[=[
-	Enables the "Mash to open" feature.
-	This feature, when enabled, requires the activation key to be pressed 5 times within a second to [enable](#SetEnabled) Cmdr.
-	This may be helpful to guard against mispresses from opening the window, for example.
+--- Enables the "Mash to open" feature
+function Cmdr:SetMashToEnable(isEnabled)
+	self.MashToEnable = isEnabled
 
-	@within CmdrClient
-]=]
-function Cmdr:SetMashToEnable(enabled: boolean)
-	self.MashToEnable = enabled
-
-	if enabled then
+	if isEnabled then
 		self:SetEnabled(false)
 	end
 end
 
---[=[
-	Sets the hide on 'lost focus' feature.
-	This feature, which is enabled by default, will cause Cmdr to [hide](#Hide) when the user clicks off the window.
-
-	@within CmdrClient
-]=]
-function Cmdr:SetHideOnLostFocus(enabled: boolean)
+--- Sets the hide on 'lost focus' feature.
+function Cmdr:SetHideOnLostFocus(enabled)
 	self.HideOnLostFocus = enabled
 end
 
---[=[
-	Sets the [network event handler](/docs/networkeventhandlers) for a certain event type.
-
-	@within CmdrClient
-]=]
-function Cmdr:HandleEvent(name: string, callback: (...any) -> ())
+--- Sets the handler for a certain event type
+function Cmdr:HandleEvent(name, callback)
 	self.Events[name] = callback
 end
 
--- "Only register when we aren't in studio because don't want to overwrite what the server portion did"
--- This is legacy code which predates Accurate Play Solo (which is now the only way to test in studio), this code will never run.
+-- Only register when we aren't in studio because don't want to overwrite what the server portion did
 if RunService:IsServer() == false then
 	Cmdr.Registry:RegisterTypesIn(script:WaitForChild("Types"))
 	Cmdr.Registry:RegisterCommandsIn(script:WaitForChild("Commands"))
