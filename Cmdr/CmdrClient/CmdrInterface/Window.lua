@@ -76,6 +76,7 @@ end
 
 --- Sets the command bar visible or not
 function Window:SetVisible(visible)
+	container.Visible = visible
 	Gui.Visible = visible
 
 	if visible then
